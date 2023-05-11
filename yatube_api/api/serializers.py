@@ -54,7 +54,7 @@ class FollowSerializer(serializers.ModelSerializer):
                 message='Вы уже подписывались на этого автора'
             )
         ]
-    
+
     def validate_following(self, value):
         user = self.context['request'].user
         following = get_object_or_404(User, username=value)
