@@ -32,7 +32,7 @@ class CommentViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         pk_post = self.kwargs.get("pk_post")
-        post = Post.objects.get(pk=pk_post)
+        post = get_object_or_404(Post, pk=pk_post)
         serializer.save(post=post, author=self.request.user)
 
 
@@ -43,7 +43,6 @@ class GroupViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class FollowViewSet(viewsets.ModelViewSet):
-    queryset = Follow.objects.all()
     serializer_class = FollowSerializer
     permission_classes = (IsAuthenticated, )
     filter_backends = (filters.SearchFilter,)
@@ -53,22 +52,7 @@ class FollowViewSet(viewsets.ModelViewSet):
         user = self.request.user
         queryset = Follow.objects.filter(user=user)
         return queryset
-
-    def create(self, request):
-        user = request.user
-        following_username = request.data.get('following')
-        if following_username:
-            following = get_object_or_404(User, username=following_username)
-            if following == user:
-                return Response({'error': 'You cannot follow yourself.'},
-                                status=status.HTTP_400_BAD_REQUEST)
-            if Follow.objects.filter(user=user, following=following).exists():
-                return Response({'error':
-                                 'You are already following this user.'},
-                                status=status.HTTP_400_BAD_REQUEST)
-            follow = Follow.objects.create(user=user, following=following)
-            serializer = self.get_serializer(follow)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        else:
-            return Response({'error': 'Missing following username.'},
-                            status=status.HTTP_400_BAD_REQUEST)
+    
+    def perform_create(self, serializer):
+        user = self.request.user
+        serializer.save(user=user)
